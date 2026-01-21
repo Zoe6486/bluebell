@@ -205,3 +205,31 @@ volumes:
 
 在根目录添加了.gitattributes和.gitignore执行 git add --renormalize . 别忘了末尾的. git commit -m "Add .gitattributes and .gitignore; normalize line endings" git顺序,在github创建一个名为blubell的repository： git init git checkout -b main git add .gitignore .gitattributes git add . git commit -m "chore: initial commit with .gitignore and .gitattributes" git remote add origin https://github.com/Zoe6486/bluebell.git git push -u origin main
 新建一个功能分支： git checkout -b feature/signup 本地开发完成后 push 到远程：git push -u origin feature/login Pull Request (PR)： 功能完成后发 PR 到 main， 团队成员 Code Review，CI/CD 自动跑：语法检查 (lint)， 自动单元/集成测试，构建打包，部署到测试环境（可选） Merge / Release：PR 审核通过后 merge 到 main，main 可以打 release tag：v1.0.0，CI/CD 自动部署到生产环境 功能分支合并后可以删除： git branch -d feature/login # 本地删除 git push origin --delete feature/login # 远程删除
+
+创建新的分支
+Step 1: 确保 main 最新
+git checkout main
+git pull origin main
+
+Step 2: 从 main 新建 feature 分支
+git checkout -b feature/signup
+
+Step 3: 在 feature/signup 开发
+# 修改文件 后 
+git add . 
+git commit -m "feat: signup"
+
+Step 4: push 分支到远程
+git push -u origin feature/signup
+
+Step 5: 发 PR 到 main → CI + Code Review
+
+Step 6: PR 审核通过 → merge 到 main
+merge 完后，你可以安全地切回 main：
+git checkout main
+git pull origin main
+merge 完后，你可以安全地切回 main：
+
+git checkout main
+git pull origin main
+注意：merge 前不要切回 main 改动功能代码！！！
