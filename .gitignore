@@ -70,9 +70,15 @@ temp/
 # ===============================
 # Database dumps / backups
 # ===============================
+# 不该上传的 SQL 是啥？
+# 数据库导出文件（dump），包含敏感真实数据的 INSERT 语句，临时调试或临时查询语句
+# 这些都不适合存 GitHub，防止泄露或仓库膨胀。
 *.sql
 *.dump
 *.bak
+# 但不忽略 migrations 目录下的 SQL（包含子目录）迁移脚本
+!migrations/*.sql
+!migrations/**/*.sql 
 
 # ===============================
 # Coverage / profiling

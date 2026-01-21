@@ -47,3 +47,7 @@
 *.ico    binary
 *.zip    binary
 *.exe    binary
+
+# SQL files as text with LF line endings
+*.sql    text eol=lf
+

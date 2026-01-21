@@ -34,7 +34,8 @@ services:
     image: "mysql:8.0.19"
     ports:
       - "23306:3306"   # 映射到宿主机 23306，和你的 dev.yaml 保持一致
-    command: "--default-authentication-plugin=mysql_native_password --init-file /data/application/init.sql"
+    # command: "--default-authentication-plugin=mysql_native_password --init-file /data/application/init.sql"
+    command: "--default-authentication-plugin=mysql_native_password"
     environment:
       MYSQL_ROOT_PASSWORD: "root1234"
       MYSQL_DATABASE: "db_bluebell"
@@ -42,7 +43,7 @@ services:
     volumes:
       # - ./mysql_data:/var/lib/mysql   # 把数据库数据挂载到宿主机目录
       - mysql_data:/var/lib/mysql #Docker Volume 保存 MySQL 数据, 团队协作/生产
-      - ./init.sql:/data/application/init.sql  
+      # - ./init.sql:/data/application/init.sql  
 
   redis507:
     image: "redis:5.0.7"

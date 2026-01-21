@@ -210,11 +210,16 @@ docker-compose -f docker-compose.yml stop
    `docker-compose -f docker-compose.dev.yml -p bluebell_dev up -d`
    `docker-compose -f docker-compose.dev.yml -p bluebell_dev down`
    **-v的作用**
+
+   `docker-compose -f docker-compose.dev.yml -p bluebell_dev down -v`
+
    down：停容器 + 删容器 + 删 network
    -v：只删除这个 compose 用到的 volume
+
    services:
      mysql:
     volumes:
+
       - mysql_data:/var/lib/mysql
 
 volumes:
@@ -250,19 +255,25 @@ Step 5: 发 PR 到 main → CI + Code Review
 Step 6: PR 审核通过 → merge 到 main
 注意：merge 前不要切回 main 改动功能代码！！！
 merge 完后：
+
 # 1. 切回本地 main
+
 git checkout main
 
 # 2. 拉取远程最新
+
 git pull origin main
 
 # 3. 确认状态
+
 git log --oneline -5   # 看最近提交，应该看到 merge commit
 
 # 4. 删除远程 feature 分支
+
 git push origin --delete feature/zzy
 
 # 5. 删除本地 feature 分支
+
 git branch -d feature/zyy (-d会检查merge是否成功)
 
 git branch -D feature/zzy（强制删除）
@@ -273,12 +284,104 @@ git branch          # 查看本地分支
 git branch -r       # 查看远程分支
 
 # 7.清理残留引用（可选，但推荐）：
+
 git fetch -p
 
 # 8. 确认 main 分支最新：
+
 git checkout main
 git pull origin main
 git log --oneline -5
 
 # 9. 再创建新的分支接着开发：
-git branch -d feature/abc
+
+git checkout -b feature/abc
+
+
+
+
+
+11. 安装 golang-migrate（CLI）
+
+1.  https://github.com/golang-migrate/migrate/releases找到migrate.windows-amd64.zip下载
+
+2. 解压后得到migrate.exe,把它放到C:\Windows\System32\下 或放到C:\tools\migrate\migrate.exe然后把 `C:\tools\migrate` 加到 **PATH**
+
+3. 验证是否成功：打开 **新的** PowerShell / CMD输入 `migrate -version`看是否输出4.19.1类似版本
+
+4. 在项目根目录下创建一个 `migrations` 文件夹，然后运行命令生成第一对迁移脚本：
+
+   ```bash
+   migrate create -ext sql -dir ./migrations -seq create_users_table
+   ```
+
+   `migrations` 目录下生成了两个文件：
+
+   `000001_create_users_table.up.sql` (升级：写建表语句)
+
+   `000001_create_users_table.down.sql` (回滚：写删表语句)
+5. 写入sql语句
+6. 在项目根目录下创建cmd/migrate/main.go
+
+   ```go
+   package main
+   
+   import (
+   	"log"
+   
+   	"github.com/golang-migrate/migrate/v4"
+   	_ "github.com/golang-migrate/migrate/v4/database/mysql"
+   	_ "github.com/golang-migrate/migrate/v4/source/file"
+   )
+   
+   func main() {
+   	m, err := migrate.New(
+   		"file://migrations",
+   		"mysql://root:root1234@tcp(127.0.0.1:23306)/db_bluebell?multiStatements=true",
+   	)
+   	if err != nil {
+   		log.Fatal(err)
+   	}
+   
+   	if err := m.Up(); err != nil && err != migrate.ErrNoChange {
+   		log.Fatal(err)
+   	}
+   
+   	log.Println("migrate up success")
+   }
+   
+   ```
+
+   
+
+7. 执行命令：`go run cmd/migrate/main.go`出现success就好了
+
+8. postman测试：一个用户signup成功后，如果想查看数据库，直接打开DBeaver
+
+   ### 1️⃣ 新建连接
+
+   1. 打开 DBeaver → 点击 **Database → New Database Connection**。
+   2. 选择 **MySQL**（如果没看到可以在搜索框里输入 “MySQL”）。
+   3. 点击 **Next**。
+
+   ------
+
+   ### 2️⃣ 填写连接信息
+
+   根据你的 Docker Compose 配置：
+
+   | 配置项   | 值          |
+   | -------- | ----------- |
+   | Host     | 127.0.0.1   |
+   | Port     | 23306       |
+   | Database | db_bluebell |
+   | Username | root        |
+   | Password | root1234    |
+
+   ------
+
+   ### 3️⃣ 测试连接
+
+   - 点击 **Test Connection**
+   - 如果成功，就可以点击 **Finish** 保存连接,
+   - 可能会提示缺失mysql-connector-j-8.0.33.jar + protobuf-java-3.21.9.jar，按照提示download就好了
