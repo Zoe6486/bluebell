@@ -248,24 +248,37 @@ git push -u origin feature/signup
 Step 5: 发 PR 到 main → CI + Code Review
 
 Step 6: PR 审核通过 → merge 到 main
-merge 完后，你可以安全地切回 main：
-git checkout main
-git pull origin main
-merge 完后，你可以安全地切回 main：
-
-git checkout main
-
-# 删除远程 feature 分支
-
-git push origin --delete feature/signup
-
-# 删除本地 feature 分支
-
-git branch -d feature/signup   (-d会检查是否merge成功）
-
-git branch -D feature/signup（强制删除）
-
-git pull origin main
 注意：merge 前不要切回 main 改动功能代码！！！
-再创建新的分支接着开发：
-git branch -d feature/...
+merge 完后：
+# 1. 切回本地 main
+git checkout main
+
+# 2. 拉取远程最新
+git pull origin main
+
+# 3. 确认状态
+git log --oneline -5   # 看最近提交，应该看到 merge commit
+
+# 4. 删除远程 feature 分支
+git push origin --delete feature/zzy
+
+# 5. 删除本地 feature 分支
+git branch -d feature/zyy (-d会检查merge是否成功)
+
+git branch -D feature/zzy（强制删除）
+
+# 6. 确认分支已经删除：
+
+git branch          # 查看本地分支
+git branch -r       # 查看远程分支
+
+# 7.清理残留引用（可选，但推荐）：
+git fetch -p
+
+# 8. 确认 main 分支最新：
+git checkout main
+git pull origin main
+git log --oneline -5
+
+# 9. 再创建新的分支接着开发：
+git branch -d feature/abc
