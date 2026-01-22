@@ -1,12 +1,12 @@
 bluebell_notes
 
+#### 1.1 `./scaffold_demo.exe` 因为MySQL和Redis运行failed
 
-1. `./scaffold_demo.exe` 因为MySQL和Redis运行failed
-   **发现错误init mysql failed**
-   终端`go build`后成功出现一个scaffold_demo.exe文件， 在终端输入`./scaffold_demo.exe` 运行项目，
-   但发现错误init mysql failed, error: dial tcp 127.0.0.1:13306: connectex: No connection could be made because the target machine actively refused it.
-   解决：
-   在powershell中输入以下:（记得先启动docker，并注意密码名称和config里面写的一致，不一致就删掉容器重写）
+**发现错误init mysql failed**
+终端`go build`后成功出现一个scaffold_demo.exe文件， 在终端输入`./scaffold_demo.exe` 运行项目，
+但发现错误init mysql failed, error: dial tcp 127.0.0.1:13306: connectex: No connection could be made because the target machine actively refused it.
+解决：
+在powershell中输入以下:（记得先启动docker，并注意密码名称和config里面写的一致，不一致就删掉容器重写）
 
 ```bash
             docker run -d `
@@ -35,7 +35,9 @@ bluebell_notes
 你的 MySQL 和 Redis 容器是在后台（-d 模式）运行的，即便你关掉 VS Code 甚至关掉电脑，只要你不手动停止，它们下次开机通常会随 Docker Desktop 自动启动。
 如果你想彻底释放电脑内存，可以在 PowerShell 输入：`docker stop mysql-scaffold redis-scaffold`
 下次启动Docker后，在终端输入 `docker ps` 如果列表里没有 mysql-scaffold，说明它们停了。输入 `docker start mysql-scaffold redis-scaffold` 唤醒它们。
-**直接关闭Vscode和使用ctrl+C的区别**
+
+### 1.2 **直接关闭Vscode和使用ctrl+C的区别**
+
 Ctrl + C (Server exiting)：
         原理：这发送了一个 SIGINT（中断）信号给你的 Go 程序。
         过程：你的程序接收到信号后，主动停止接收新请求，并开始执行你在 main.go 中写的收尾工作（比如 db.Close() 或 redis.Close()），最后打印出 "Server exiting" 并退出。
@@ -47,11 +49,12 @@ Ctrl + C (Server exiting)：
         
 端口冲突：如果看到 bind: address already in use，说明你今晚的 Shutdown Server 并没有彻底杀死进程（偶尔会发生）。这时候去任务管理器杀掉 scaffold_demo.exe 即可。
 
-2. 指定配置文件的路径
-   **方式一：SetCongigFile直接指定路径**
-   `viper.SetConfigFile("./config.yaml)` //相对路径
-   或
-   `viper.SetConfigFile("/Users/Ziying/.../config.yaml)` //绝对路径
+### 1.3指定配置文件的路径
+
+**方式一：SetCongigFile直接指定路径**
+`viper.SetConfigFile("./config.yaml)` //相对路径
+或
+`viper.SetConfigFile("/Users/Ziying/.../config.yaml)` //绝对路径
 
 **方式二：指定文件名和位置，viper自行查找文件**
 `viper.SetConfigName("config")` //指定文件名(不带后缀)
@@ -64,7 +67,7 @@ Ctrl + C (Server exiting)：
 `viper.SetConfigType("yaml")`   
 配合远程配置中心使用，解析配置前需要知道配置类型，告诉Viper是使用json还是yaml等什么格式去解析
 
-3. Dockerfile + docker-compose.yml
+### 1.4 Dockerfile + docker-compose.yml
 
 **Dockerfile** ——「我这个程序怎么被打包」
 用什么系统, 怎么编译, 运行时需要哪些文件, 最终怎么启动
@@ -156,31 +159,31 @@ docker-compose build --no-cache 或 docker-compose up --build 会强制重建镜
 
 7. 关闭程序:
 
-# 7.1 停止本地 Go 程序
+7.1 停止本地 Go 程序
 
 Ctrl + C
 
-# 7.2 停止 Docker 容器，但保留数据
+7.2 停止 Docker 容器，但保留数据
 
 ```
 docker-compose -f docker-compose.yml stop
 ```
 
-# 7.3  下次开发：
+7.3  下次开发：
 
 `docker-composse -f docker-compose.yml start`   # 启动 MySQL/Redis
 `go run . ./conf/dev.yaml`                     # 启动 Go
 
 8. 清除旧容器
 
-# 8.1 停止并删除旧容器
+8.1 停止并删除旧容器
 
 `docker-compose -f docker-compose.yml down`
 · `down`会停止并删除 当前 Compose 文件启动的所有容器
 · 默认不会删除 Volume，除非你加末尾加 `-v`
 `docker-compose -f docker-compose.yml down -v`删除容器+卷
 
-# 8.2 删除无用的旧容器（可选）
+8.2 删除无用的旧容器（可选）
 
 · 查看所有容器：
 `docker ps -a`
@@ -190,7 +193,7 @@ docker-compose -f docker-compose.yml stop
 `docker volume ls`
 `docker volume rm <volume_name>`
 
-# 8.3使用新的docker-compose.yml 启动
+8.3使用新的docker-compose.yml 启动
 
 · 启动数据库和 Redis： `docker-compose -f docker-compose.yml up -d` 
   或 简化版（只有一个 compose 文件）`docker-compose up -d`
@@ -225,14 +228,16 @@ docker-compose -f docker-compose.yml stop
 volumes:
   mysql_data:
 
-10. 在根目录添加了.gitattributes和.gitignore执行
-    `git add --renormalize .` 别忘了末尾的.
-    `git commit -m "Add .gitattributes and .gitignore; normalize line endings"`
+### 1.5 在根目录添加了.gitattributes和.gitignore执行
+
+`git add --renormalize .` 别忘了末尾的.
+`git commit -m "Add .gitattributes and .gitignore; normalize line endings"`
 
 在根目录添加了.gitattributes和.gitignore执行 git add --renormalize . 别忘了末尾的. git commit -m "Add .gitattributes and .gitignore; normalize line endings" git顺序,在github创建一个名为blubell的repository： git init git checkout -b main git add .gitignore .gitattributes git add . git commit -m "chore: initial commit with .gitignore and .gitattributes" git remote add origin https://github.com/Zoe6486/bluebell.git git push -u origin main
 新建一个功能分支： git checkout -b feature/signup 本地开发完成后 push 到远程：git push -u origin feature/login Pull Request (PR)： 功能完成后发 PR 到 main， 团队成员 Code Review，CI/CD 自动跑：语法检查 (lint)， 自动单元/集成测试，构建打包，部署到测试环境（可选） Merge / Release：PR 审核通过后 merge 到 main，main 可以打 release tag：v1.0.0，CI/CD 自动部署到生产环境 功能分支合并后可以删除： git branch -d feature/login # 本地删除 git push origin --delete feature/login # 远程删除
 
-创建新的分支
+### 1.6 创建新的分支
+
 Step 1: 确保 main 最新
 git checkout main
 git pull origin main
@@ -242,7 +247,7 @@ git checkout -b feature/signup
 
 Step 3: 在 feature/signup 开发
 
-# 修改文件 后 
+###### 修改文件 后 
 
 git add . 
 git commit -m "feat: signup"
@@ -254,46 +259,47 @@ Step 5: 发 PR 到 main → CI + Code Review
 
 Step 6: PR 审核通过 → merge 到 main
 注意：merge 前不要切回 main 改动功能代码！！！
-merge 完后：
 
-# 1. 切回本地 main
+###### merge 完后：
+
+1. 切回本地 main
 
 git checkout main
 
-# 2. 拉取远程最新
+2. 拉取远程最新
 
 git pull origin main
 
-# 3. 确认状态
+3. 确认状态
 
 git log --oneline -5   # 看最近提交，应该看到 merge commit
 
-# 4. 删除远程 feature 分支
+4. 删除远程 feature 分支
 
 git push origin --delete feature/zzy
 
-# 5. 删除本地 feature 分支
+5. 删除本地 feature 分支
 
 git branch -d feature/zyy (-d会检查merge是否成功)
 
 git branch -D feature/zzy（强制删除）
 
-# 6. 确认分支已经删除：
+6. 确认分支已经删除：
 
 git branch          # 查看本地分支
 git branch -r       # 查看远程分支
 
-# 7.清理残留引用（可选，但推荐）：
+7.清理残留引用（可选，但推荐）：
 
 git fetch -p
 
-# 8. 确认 main 分支最新：
+8. 确认 main 分支最新：
 
 git checkout main
 git pull origin main
 git log --oneline -5
 
-# 9. 再创建新的分支接着开发：
+9. 再创建新的分支接着开发：
 
 git checkout -b feature/abc
 
@@ -301,87 +307,89 @@ git checkout -b feature/abc
 
 
 
-11. 安装 golang-migrate（CLI）
+### 1.7 安装 golang-migrate（CLI）
 
-1.  https://github.com/golang-migrate/migrate/releases找到migrate.windows-amd64.zip下载
+https://github.com/golang-migrate/migrate/releases找到migrate.windows-amd64.zip下载
 
-2. 解压后得到migrate.exe,把它放到C:\Windows\System32\下 或放到C:\tools\migrate\migrate.exe然后把 `C:\tools\migrate` 加到 **PATH**
+解压后得到migrate.exe,把它放到C:\Windows\System32\下 或放到C:\tools\migrate\migrate.exe然后把 `C:\tools\migrate` 加到 **PATH**
 
-3. 验证是否成功：打开 **新的** PowerShell / CMD输入 `migrate -version`看是否输出4.19.1类似版本
+验证是否成功：打开 **新的** PowerShell / CMD输入 `migrate -version`看是否输出4.19.1类似版本
 
-4. 在项目根目录下创建一个 `migrations` 文件夹，然后运行命令生成第一对迁移脚本：
+在项目根目录下创建一个 `migrations` 文件夹，然后运行命令生成第一对迁移脚本：
 
-   ```bash
-   migrate create -ext sql -dir ./migrations -seq create_users_table
-   ```
+```bash
+migrate create -ext sql -dir ./migrations -seq create_users_table
+```
 
-   `migrations` 目录下生成了两个文件：
+`migrations` 目录下生成了两个文件：
 
-   `000001_create_users_table.up.sql` (升级：写建表语句)
+`000001_create_users_table.up.sql` (升级：写建表语句)
 
-   `000001_create_users_table.down.sql` (回滚：写删表语句)
-5. 写入sql语句
-6. 在项目根目录下创建cmd/migrate/main.go
+`000001_create_users_table.down.sql` (回滚：写删表语句)
 
-   ```go
-   package main
-   
-   import (
-   	"log"
-   
-   	"github.com/golang-migrate/migrate/v4"
-   	_ "github.com/golang-migrate/migrate/v4/database/mysql"
-   	_ "github.com/golang-migrate/migrate/v4/source/file"
-   )
-   
-   func main() {
-   	m, err := migrate.New(
-   		"file://migrations",
-   		"mysql://root:root1234@tcp(127.0.0.1:23306)/db_bluebell?multiStatements=true",
-   	)
-   	if err != nil {
-   		log.Fatal(err)
-   	}
-   
-   	if err := m.Up(); err != nil && err != migrate.ErrNoChange {
-   		log.Fatal(err)
-   	}
-   
-   	log.Println("migrate up success")
-   }
-   
-   ```
+写入sql语句
 
-   
+在项目根目录下创建cmd/migrate/main.go
 
-7. 执行命令：`go run cmd/migrate/main.go`出现success就好了
+```go
+package main
 
-8. postman测试：一个用户signup成功后，如果想查看数据库，直接打开DBeaver
+import (
+	"log"
 
-   ### 1️⃣ 新建连接
+	"github.com/golang-migrate/migrate/v4"
+	_ "github.com/golang-migrate/migrate/v4/database/mysql"
+	_ "github.com/golang-migrate/migrate/v4/source/file"
+)
 
-   1. 打开 DBeaver → 点击 **Database → New Database Connection**。
-   2. 选择 **MySQL**（如果没看到可以在搜索框里输入 “MySQL”）。
-   3. 点击 **Next**。
+func main() {
+	m, err := migrate.New(
+		"file://migrations",
+		"mysql://root:root1234@tcp(127.0.0.1:23306)/db_bluebell?multiStatements=true",
+	)
+	if err != nil {
+		log.Fatal(err)
+	}
 
-   ------
+	if err := m.Up(); err != nil && err != migrate.ErrNoChange {
+		log.Fatal(err)
+	}
 
-   ### 2️⃣ 填写连接信息
+	log.Println("migrate up success")
+}
 
-   根据你的 Docker Compose 配置：
+```
 
-   | 配置项   | 值          |
-   | -------- | ----------- |
-   | Host     | 127.0.0.1   |
-   | Port     | 23306       |
-   | Database | db_bluebell |
-   | Username | root        |
-   | Password | root1234    |
 
-   ------
 
-   ### 3️⃣ 测试连接
+执行命令：`go run cmd/migrate/main.go`出现success就好了
 
-   - 点击 **Test Connection**
-   - 如果成功，就可以点击 **Finish** 保存连接,
-   - 可能会提示缺失mysql-connector-j-8.0.33.jar + protobuf-java-3.21.9.jar，按照提示download就好了
+postman测试：一个用户signup成功后，如果想查看数据库，直接打开DBeaver
+
+### 1️⃣ 新建连接
+
+1. 打开 DBeaver → 点击 **Database → New Database Connection**。
+2. 选择 **MySQL**（如果没看到可以在搜索框里输入 “MySQL”）。
+3. 点击 **Next**。
+
+------
+
+### 2️⃣ 填写连接信息
+
+根据你的 Docker Compose 配置：
+
+| 配置项   | 值          |
+| -------- | ----------- |
+| Host     | 127.0.0.1   |
+| Port     | 23306       |
+| Database | db_bluebell |
+| Username | root        |
+| Password | root1234    |
+
+------
+
+### 3️⃣ 测试连接
+
+- 点击 **Test Connection**
+- 如果成功，就可以点击 **Finish** 保存连接,
+- 可能会提示缺失mysql-connector-j-8.0.33.jar + protobuf-java-3.21.9.jar，按照提示download就好了
