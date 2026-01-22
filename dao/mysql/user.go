@@ -3,6 +3,7 @@ package mysql
 import (
 	"bluebell/models"
 	"crypto/md5"
+	"database/sql"
 	"encoding/hex"
 	"errors"
 )
@@ -41,4 +42,28 @@ func encryptPassword(oPassword string) string {
 	h := md5.New()
 	h.Write([]byte(secret))
 	return hex.EncodeToString(h.Sum([]byte(oPassword)))
+}
+
+func Login(user *models.User) (err error) {
+	inputPassword := user.Password /// 先保存用戶輸入的明文密碼
+	var dbUser models.User
+	sqlStr := `select user_id, username, password from user where username=?`
+	err = db.Get(&dbUser, sqlStr, user.Username)
+	if err == sql.ErrNoRows {
+		return ErrorUserNotExist
+	}
+	if err != nil {
+		//查询数据库失败
+		return err
+	}
+	// 比對密碼
+	if encryptPassword(inputPassword) != dbUser.Password {
+		return ErrorInvalidPassword
+	}
+	// 把 dbUser 的所有字段值，完整复制到 user 指向的结构体中
+	*user = dbUser
+	// 错误写法user = dbUser,
+	// 不加*，只是让函数内部的局部变量 user（指针本身）改指向 dbUser，但调用方原来的结构体完全没变。
+	// 函数返回后，外面的 u 还是只有 Username，其他字段还是零值或旧值。
+	return nil
 }
