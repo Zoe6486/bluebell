@@ -13,11 +13,9 @@ import (
 // SignUpHandler处理注册请求的函数
 func SignUpHandler(c *gin.Context) {
 	//1.获取参数和参数校验
-	//var p models.ParamSignUp
+	var p models.ParamSignUp
 
-	p := new(models.ParamSignUp)
-	//if err := c.ShouldBindJSON(&p); err != nil {
-	if err := c.ShouldBindJSON(p); err != nil {
+	if err := c.ShouldBindJSON(&p); err != nil {
 		// 请求参数有误，直接返回响应
 		zap.L().Error("SignUp with invalid param", zap.Error(err))
 		// 判断是否为 validator 校验错误
@@ -69,7 +67,7 @@ func SignUpHandler(c *gin.Context) {
 	// fmt.Println(p)
 
 	//2.业务处理
-	if err := logic.SignUp(p); err != nil {
+	if err := logic.SignUp(&p); err != nil {
 		zap.L().Error("logic.SignUp failed", zap.Error(err))
 		c.JSON(http.StatusBadRequest, gin.H{
 			"msg": err.Error(),
@@ -86,10 +84,10 @@ func SignUpHandler(c *gin.Context) {
 // LogInHandler 登录
 func LoginHandler(c *gin.Context) {
 	// 1.获取请求参数及参数校验
-	p := new(models.ParamLogin)
-	if err := c.ShouldBindJSON(p); err != nil {
+	var p models.ParamLogin
+	if err := c.ShouldBindJSON(&p); err != nil {
 		// 请求参数有误，直接返回响应
-		zap.L().Error("SignUp with invalid param", zap.Error(err))
+		zap.L().Error("Login with invalid param", zap.Error(err))
 		// 判断是否为 validator 校验错误
 		if errs, ok := err.(validator.ValidationErrors); ok {
 			// 格式化错误，返回前端友好 JSON
@@ -107,16 +105,18 @@ func LoginHandler(c *gin.Context) {
 		return
 	}
 	// 2.业务逻辑处理
-	if err := logic.Login(p); err != nil {
+	user, err := logic.Login(&p)
+	if err != nil {
 		zap.L().Error("logic.Login failed", zap.String("username", p.Username), zap.Error(err))
-		c.JSON(http.StatusOK, gin.H{
-			"msg": "username or password is not correct.",
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": "invalid username or password",
 		})
 		return
 	}
 	// 3.返回响应
 	c.JSON(http.StatusOK, gin.H{
-		"msg": "log in successfully.",
+		"access_token": user.Token,
+		"token_type":   "Bearer",
+		"expires_in":   86400,
 	})
-
 }
