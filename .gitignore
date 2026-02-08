@@ -79,6 +79,9 @@ temp/
 # 但不忽略 migrations 目录下的 SQL（包含子目录）迁移脚本
 !migrations/*.sql
 !migrations/**/*.sql 
+# seeds文件的sql也暂且放进去吧
+!seeds/*.sql
+!seeds/**/*.sql 
 
 # ===============================
 # Coverage / profiling

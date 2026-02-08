@@ -15,15 +15,28 @@ import (
 )
 
 func main() {
-	// 加载配置
-	//Bash: `./myapp config.yaml debug`中：
-	//os.Args[0] // "./myapp" —— 程序本身的名字
-	//os.Args[1] // "config.yaml" —— 第一个命令行参数
-	//os.Args[2] // "debug" 第二个命令行参数
-	if err := setting.Init(os.Args[1]); err != nil {
+	// // 加载配置
+	// //Bash: `./myapp config.yaml debug`中：
+	// //os.Args[0] // "./myapp" —— 程序本身的名字
+	// //os.Args[1] // "config.yaml" —— 第一个命令行参数
+	// //os.Args[2] // "debug" 第二个命令行参数
+	// if len(os.Args) < 2 {
+	// 	fmt.Println("need config file.eg: bluebell config.yaml")
+	// 	return
+	// }
+	// if err := setting.Init(os.Args[1]); err != nil {
+	// 	fmt.Printf("load config failed, err:%v\n", err)
+	// 	return
+	// }
+	configPath := "./conf/dev.yaml" // 默认 dev
+	if len(os.Args) >= 2 {
+		configPath = os.Args[1]
+	}
+	if err := setting.Init(configPath); err != nil {
 		fmt.Printf("load config failed, err:%v\n", err)
 		return
 	}
+
 	if err := logger.Init(setting.Conf.LogConfig, setting.Conf.Mode); err != nil {
 		fmt.Printf("init logger failed, err:%v\n", err)
 		return

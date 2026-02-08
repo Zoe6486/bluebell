@@ -34,7 +34,7 @@ type MyClaims struct {
 // 实战不直接在里面定义，这里暂且这样写，后面得改
 var mySecret = []byte("夏天夏天悄悄过去")
 
-// 注意我只写了access tokem,没写refresh token，后面可以再补
+// 注意我只写了access tokem,没写refresh token，后面可以再补?
 // GenToken 生成 JWT
 func GenToken(userID int64, username string) (string, error) {
 	expireHours := viper.GetInt("auth.jwt_expire")
