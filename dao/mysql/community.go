@@ -22,7 +22,9 @@ import (
 
 // interface 为了解耦和测试
 // 1. 定义接口
-// 这样 Service 层只需要知道有哪些方法，不需要管底层是 MySQL 还是 Redis
+// 这样 Service 层只需要知道有哪些方法，
+// 只要你能提供这两个方法，你就是一个 CommunityStore。
+// 不需要管底层是 MySQL， 还是 Redis， 还是 Mock 实现（测试用），还是内存实现
 type CommunityStore interface {
 	GetCommunityList() ([]*models.Community, error)
 	GetCommunityDetailByID(id int64) (*models.CommunityDetail, error)
@@ -37,8 +39,8 @@ type communityDao struct {
 
 // 3. 构造函数返回接口类型
 // 这是“大企业”常用的做法：返回接口而非具体指针
-func NewCommunityDao(db *sqlx.DB) CommunityStore {
-	return &communityDao{db: db}
+func NewCommunityDao(db *sqlx.DB) CommunityStore { // 返回的是接口,注意这里没加*，接口相当于类型信息 + 指向具体值的指针，所以不用加。具体类型 是communityDao 的指针，但藏在接口后面
+	return &communityDao{db: db} // 塞进去的是具体的结构体指针
 }
 
 // --- 下面是具体实现 ---
@@ -47,6 +49,7 @@ func (dao *communityDao) GetCommunityList() ([]*models.Community, error) {
 	var communityList []*models.Community
 	sqlStr := `select community_id, community_name from community`
 	// 注意区分 Get（查单条），有ErrNoRows
+	// Select 需要传指针
 	// Select 把“没数据”已经用空切片表达，没有ErrNoRows这个错误
 	if err := dao.db.Select(&communityList, sqlStr); err != nil {
 		return nil, err
