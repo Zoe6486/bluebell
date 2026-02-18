@@ -1,54 +1,66 @@
 package logic
 
 import (
-	"bluebell/dao/mysql"
 	"bluebell/models"
 	"bluebell/pkg/jwt"
 	"bluebell/pkg/snowflake"
-	"fmt"
 )
 
-// 存放业务逻辑的代码
-func SignUp(p *models.ParamSignUp) (err error) {
-	//判断用户是否存在
-	fmt.Println("CheckUserExist:", p.Username)
-	if err := mysql.CheckUserExist(p.Username); err != nil {
-		fmt.Println("CheckUserExist failed:", err)
+// 定义 interface，Logic 不依赖 mysql 包
+type UserStore interface {
+	CheckUserExist(username string) error
+	InsertUser(user *models.User) error
+	Login(user *models.User) error
+}
+
+type UserLogic struct {
+	store UserStore
+}
+
+// 构造函数
+func NewUserLogic(store UserStore) *UserLogic {
+	return &UserLogic{store: store}
+}
+func (l *UserLogic) SignUp(p *models.ParamSignUp) error {
+	// 判断用户是否存在
+	if err := l.store.CheckUserExist(p.Username); err != nil {
 		return err
 	}
-	//生成uid
+
+	// 生成 uid
 	userID := snowflake.GenID()
-	// 构造一个User实例
+
 	user := &models.User{
 		UserID:   userID,
 		Username: p.Username,
 		Password: p.Password,
 	}
 
-	//保存进数据库
-	if err := mysql.InsertUser(user); err != nil {
-		fmt.Println("InsertUser failed:", err)
+	// 保存进数据库
+	if err := l.store.InsertUser(user); err != nil {
 		return err
 	}
-	fmt.Println("User inserted:", user.Username)
+
 	return nil
-	//redis.xxx ...
 }
 
-func Login(p *models.ParamLogin) (user *models.User, err error) {
-	user = &models.User{
+func (l *UserLogic) Login(p *models.ParamLogin) (*models.User, error) {
+	user := &models.User{
 		Username: p.Username,
 		Password: p.Password,
 	}
-	// 传递的是指针，就能拿到user.UserID
-	if err := mysql.Login(user); err != nil {
+
+	// 调用 dao 登录
+	if err := l.store.Login(user); err != nil {
 		return nil, err
 	}
-	// 生成JWT的token
+
+	// 生成 JWT
 	token, err := jwt.GenToken(user.UserID, user.Username)
 	if err != nil {
-		return
+		return nil, err
 	}
+
 	user.Token = token
-	return
+	return user, nil
 }

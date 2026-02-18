@@ -1,8 +1,8 @@
 package controller
 
 import (
-	"bluebell/dao/mysql"
 	"bluebell/logic"
+	"errors"
 	"net/http"
 	"strconv"
 
@@ -10,11 +10,12 @@ import (
 )
 
 type CommunityController struct {
+	// Controller 依赖 Logic
 	logic *logic.CommunityLogic
 }
 
-func NewCommunityController(logic *logic.CommunityLogic) *CommunityController {
-	return &CommunityController{logic: logic}
+func NewCommunityController(l *logic.CommunityLogic) *CommunityController {
+	return &CommunityController{logic: l}
 }
 
 // GetCommunityListHandler 列表接口
@@ -31,6 +32,7 @@ func (c *CommunityController) GetCommunityListHandler(ctx *gin.Context) {
 
 // GetCommunityDetailHandler 获取详情
 func (c *CommunityController) GetCommunityDetailHandler(ctx *gin.Context) {
+	// 获取 URL 中的参数 /community/:id
 	idStr := ctx.Param("id")
 	id, err := strconv.ParseInt(idStr, 10, 64)
 	if err != nil {
@@ -38,19 +40,21 @@ func (c *CommunityController) GetCommunityDetailHandler(ctx *gin.Context) {
 		ctx.JSON(http.StatusBadRequest, gin.H{"error": "invalid community id"})
 		return
 	}
-
+	// 调用 Logic 层
 	data, err := c.logic.GetCommunityDetail(id)
 	if err != nil {
-		//  重点：根据 DAO 返回的具体错误给状态码
-		if err == mysql.ErrorInvalidID {
-			// 没找到资源，给 404 Not Found
-			ctx.JSON(http.StatusNotFound, gin.H{"error": "community not found"})
+		// 只判断业务错误
+		if errors.Is(err, logic.ErrCommunityNotFound) {
+			ctx.JSON(http.StatusNotFound, gin.H{
+				"error": err.Error(),
+			})
 			return
 		}
+		// 其他错误直接 500
 		ctx.AbortWithStatus(http.StatusInternalServerError)
 		return
 	}
 
-	//  直接返回对象
+	//  成功返回 (直接返回 models.CommunityDetail 对象)
 	ctx.JSON(http.StatusOK, data)
 }
