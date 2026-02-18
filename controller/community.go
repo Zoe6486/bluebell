@@ -41,7 +41,7 @@ func (c *CommunityController) GetCommunityDetailHandler(ctx *gin.Context) {
 
 	data, err := c.logic.GetCommunityDetail(id)
 	if err != nil {
-		// ✅ 重点：根据 DAO 返回的具体错误给状态码
+		//  重点：根据 DAO 返回的具体错误给状态码
 		if err == mysql.ErrorInvalidID {
 			// 没找到资源，给 404 Not Found
 			ctx.JSON(http.StatusNotFound, gin.H{"error": "community not found"})
@@ -51,6 +51,6 @@ func (c *CommunityController) GetCommunityDetailHandler(ctx *gin.Context) {
 		return
 	}
 
-	// ✅ 直接返回对象
+	//  直接返回对象
 	ctx.JSON(http.StatusOK, data)
 }
