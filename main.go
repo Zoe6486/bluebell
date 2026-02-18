@@ -68,6 +68,7 @@ func main() {
 		panic(err)
 	}
 
+	// 初始化 MySQL
 	// if err := mysql.Init(setting.Conf.MySQLConfig); err != nil {
 	// 	// fmt.Printf("init mysql failed, err:%v\n", err)
 	// 	// return
@@ -78,8 +79,15 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	defer db.Close()
+	// defer db.Close()
+	// 延迟关闭，并处理错误
+	defer func() {
+		if err := db.Close(); err != nil {
+			zap.L().Error("mysql db close failed", zap.Error(err))
+		}
+	}()
 
+	// 初始化 Redis
 	if err := redis.Init(setting.Conf.RedisConfig); err != nil {
 		// fmt.Printf("init redis failed, err:%v\n", err)
 		// return
