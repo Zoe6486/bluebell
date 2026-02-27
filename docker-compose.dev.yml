@@ -33,7 +33,7 @@ services:
   mysql8019:
     image: "mysql:8.0.19"
     ports:
-      - "23306:3306"   # 映射到宿主机 23306，和你的 dev.yaml 保持一致
+      - "23306:3306"   # 映射到宿主机 23306，和我的 dev.yaml 保持一致
     # command: "--default-authentication-plugin=mysql_native_password --init-file /data/application/init.sql"
     command: "--default-authentication-plugin=mysql_native_password"
     environment:

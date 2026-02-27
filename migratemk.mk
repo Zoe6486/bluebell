@@ -1,4 +1,4 @@
-#windows 用不了makefile,用cmd/migrate/main.go代替了
+#windows 用不了makefile,先用cmd/migrate/main.go代替，后面再写
 # DB_URL = mysql://root:root1234@tcp(127.0.0.1:23306)/db_bluebell?multiStatements=true
 # MIGRATIONS = ./migrations
 
