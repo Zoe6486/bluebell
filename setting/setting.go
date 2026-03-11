@@ -50,6 +50,7 @@ type LogConfig struct {
 }
 
 func Init(filePath string) (err error) {
+
 	// 方式1：直接指定配置文件路径（相对路径或者绝对路径）
 	// 相对路径：相对执行的可执行文件的相对路径
 	//viper.SetConfigFile("./conf/config.yaml")
@@ -67,6 +68,10 @@ func Init(filePath string) (err error) {
 	//viper.SetConfigType("json")
 
 	viper.SetConfigFile(filePath)
+
+	// 环境变量覆盖
+	viper.AutomaticEnv()           // ← 加这行，自动读取环境变量
+	viper.SetEnvPrefix("BLUEBELL") // ← 加这行，环境变量前缀
 
 	err = viper.ReadInConfig() // 读取配置信息
 	if err != nil {

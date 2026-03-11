@@ -89,3 +89,9 @@ temp/
 coverage/
 *.cov
 *.pprof
+
+# ===============================
+# conf
+# ===============================
+conf/config.yaml
+conf/dev.yaml
