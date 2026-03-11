@@ -5,7 +5,6 @@ import (
 	"bluebell/dao/mysql"
 	"bluebell/dao/redis"
 	"bluebell/logger"
-	"bluebell/logic"
 	"bluebell/pkg/snowflake"
 	"bluebell/router"
 	"bluebell/setting"
@@ -95,21 +94,8 @@ func main() {
 	}
 	defer redis.Close()
 
-	// ========================
-	// Dependency Injection
-	// ========================
-	// 依赖注入 (Wire Up)
-	// 这里是核心：手动组装对象树
-	userDao := mysql.NewUserDao(db)
-	userLogic := logic.NewUserLogic(userDao)
-	userCtrl := controller.NewUserController(userLogic)
-
-	commDao := mysql.NewCommunityDao(db)
-	commLogic := logic.NewCommunityLogic(commDao)
-	commCtrl := controller.NewCommunityController(commLogic)
-
 	// 4. 注册路由
-	r := router.Setup(userCtrl, commCtrl)
+	r := router.Setup(db)
 
 	//
 	// err := r.Run(fmt.Sprintf(":%d", setting.Conf.Port))

@@ -2,13 +2,18 @@ package router
 
 import (
 	"bluebell/controller"
+	"bluebell/dao/mysql"
 	"bluebell/logger"
+	"bluebell/logic"
+	"bluebell/middleware"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	"github.com/jmoiron/sqlx"
 )
 
-func Setup(userCtrl *controller.UserController, commCtrl *controller.CommunityController) *gin.Engine {
+// func Setup(userCtrl *controller.UserController, commCtrl *controller.CommunityController) *gin.Engine {
+func Setup(db *sqlx.DB) *gin.Engine {
 	r := gin.New()
 	r.Use(logger.GinLogger(), logger.GinRecovery(true))
 	//加载前端
@@ -21,6 +26,32 @@ func Setup(userCtrl *controller.UserController, commCtrl *controller.CommunityCo
 	r.GET("/ping", func(c *gin.Context) {
 		c.String(http.StatusOK, "pong")
 	})
+
+	// ========================
+	// Dependency Injection
+	// ========================
+	// 依赖注入 (Wire Up)
+	// 这里是核心：手动组装对象树
+	// ── Wire up DAOs ──────────────────────────────────────────────────────
+	userDao := mysql.NewUserDao(db)
+	communityDao := mysql.NewCommunityDao(db)
+	postDao := mysql.NewPostDao(db)
+	postVoteDao := mysql.NewPostVoteDao(db)
+	postCommentDao := mysql.NewPostCommentDao(db)
+
+	// ── Wire up Logic ─────────────────────────────────────────────────────
+	userLogic := logic.NewUserLogic(userDao)
+	communityLogic := logic.NewCommunityLogic(communityDao)
+	postLogic := logic.NewPostLogic(postDao, postVoteDao)
+	voteLogic := logic.NewPostVoteLogic(postVoteDao, postDao)
+	commentLogic := logic.NewPostCommentLogic(postCommentDao, postDao)
+
+	// ── Wire up Controllers ───────────────────────────────────────────────
+	userCtrl := controller.NewUserController(userLogic)
+	communityCtrl := controller.NewCommunityController(communityLogic)
+	postCtrl := controller.NewPostController(postLogic)
+	voteCtrl := controller.NewPostVoteController(voteLogic)
+	commentCtrl := controller.NewPostCommentController(commentLogic)
 
 	// v1 := r.Group("/api/v1")
 	api := r.Group("/api")
@@ -36,8 +67,30 @@ func Setup(userCtrl *controller.UserController, commCtrl *controller.CommunityCo
 	// community routes
 	community := v1.Group("/communities")
 	{
-		community.GET("", commCtrl.GetCommunityListHandler)
-		community.GET("/:id", commCtrl.GetCommunityDetailHandler)
+		community.GET("", communityCtrl.GetCommunityListHandler)
+		community.GET("/:id", communityCtrl.GetCommunityDetailHandler)
+	}
+
+	// Posts  (auth middleware goes here when ready)
+	posts := v1.Group("/posts")
+	// posts.Use(middleware.JWTAuth())
+	posts.Use(middleware.AuthMiddleware())
+	{
+		posts.POST("", postCtrl.CreatePost)
+		posts.GET("", postCtrl.ListPosts)
+		posts.GET("/:post_id", postCtrl.GetPost)
+		posts.DELETE("/:post_id", postCtrl.DeletePost)
+
+		// Vote — POST /api/v1/posts/vote
+		posts.POST("/vote", voteCtrl.VotePost)
+
+		// Comments — nested under a specific post
+		comments := posts.Group("/:post_id/comments")
+		{
+			comments.GET("", commentCtrl.ListComments)
+			comments.POST("", commentCtrl.CreateComment)
+			comments.DELETE("/:comment_id", commentCtrl.DeleteComment)
+		}
 	}
 
 	return r
