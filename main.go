@@ -34,7 +34,9 @@ func main() {
 	// 	fmt.Printf("load config failed, err:%v\n", err)
 	// 	return
 	// }
-	configPath := "./conf/dev.yaml" // 默认 dev
+
+	// configPath := "./conf/dev.yaml" // 默认 dev
+	configPath := "./conf/config.yaml" // 部署就用config.yaml
 	if len(os.Args) >= 2 {
 		configPath = os.Args[1]
 	}
