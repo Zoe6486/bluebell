@@ -214,15 +214,15 @@ func Init(filePath string) error {
 	viper.AutomaticEnv()
 
 	// 显式绑定 Railway 自动生成的环境变量
-	viper.BindEnv("mysql.host", "MYSQLHOST")
-	viper.BindEnv("mysql.port", "MYSQLPORT")
-	viper.BindEnv("mysql.user", "MYSQLUSER")
-	viper.BindEnv("mysql.password", "MYSQLPASSWORD")
-	viper.BindEnv("mysql.dbname", "MYSQLDATABASE")
+	viper.BindEnv("mysql.host", "MYSQL_HOST")
+	viper.BindEnv("mysql.port", "MYSQL_PORT")
+	viper.BindEnv("mysql.user", "MYSQL_USER")
+	viper.BindEnv("mysql.password", "MYSQL_PASSWORD")
+	viper.BindEnv("mysql.dbname", "MYSQL_DBNAME")
 
-	viper.BindEnv("redis.host", "REDISHOST")
-	viper.BindEnv("redis.port", "REDISPORT")
-	viper.BindEnv("redis.password", "REDISPASSWORD")
+	viper.BindEnv("redis.host", "REDIS_HOST")
+	viper.BindEnv("redis.port", "REDIS_PORT")
+	viper.BindEnv("redis.password", "REDIS_PASSWORD")
 
 	// 先解析 int 类型端口，避免 strconv.ParseInt 错误
 	mysqlPortStr := viper.GetString("mysql.port")
@@ -230,21 +230,19 @@ func Init(filePath string) error {
 	if err != nil {
 		return fmt.Errorf("invalid MYSQL_PORT: %v", err)
 	}
+	Conf.MySQLConfig.Port = mysqlPort
 
 	redisPortStr := viper.GetString("redis.port")
 	redisPort, err := strconv.Atoi(strings.TrimSpace(redisPortStr))
 	if err != nil {
 		return fmt.Errorf("invalid REDIS_PORT: %v", err)
 	}
+	Conf.RedisConfig.Port = redisPort
 
 	// Unmarshal 结构体
 	if err := viper.Unmarshal(Conf); err != nil {
 		return fmt.Errorf("config unmarshal failed: %w", err)
 	}
-
-	// 修正 int 端口
-	Conf.MySQLConfig.Port = mysqlPort
-	Conf.RedisConfig.Port = redisPort
 
 	// Watch 配置变更（可选）
 	viper.WatchConfig()
