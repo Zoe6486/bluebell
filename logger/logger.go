@@ -27,16 +27,31 @@ func Init(cfg *setting.LogConfig, mode string) (err error) {
 	if err != nil {
 		return
 	}
+	// var core zapcore.Core
+	// if mode == "dev" {
+	// 	// 进入开发模式，日志输出到终端
+	// 	consoleEncoder := zapcore.NewConsoleEncoder(zap.NewDevelopmentEncoderConfig())
+	// 	core = zapcore.NewTee(
+	// 		zapcore.NewCore(encoder, writeSyncer, l),
+	// 		zapcore.NewCore(consoleEncoder, zapcore.Lock(os.Stdout), zapcore.DebugLevel),
+	// 	)
+	// } else {
+	// 	core = zapcore.NewCore(encoder, writeSyncer, l)
+	// }
+	consoleEncoder := zapcore.NewConsoleEncoder(zap.NewDevelopmentEncoderConfig())
+
+	// 不管什么mode，都同时输出到stdout
 	var core zapcore.Core
 	if mode == "dev" {
-		// 进入开发模式，日志输出到终端
-		consoleEncoder := zapcore.NewConsoleEncoder(zap.NewDevelopmentEncoderConfig())
 		core = zapcore.NewTee(
 			zapcore.NewCore(encoder, writeSyncer, l),
 			zapcore.NewCore(consoleEncoder, zapcore.Lock(os.Stdout), zapcore.DebugLevel),
 		)
 	} else {
-		core = zapcore.NewCore(encoder, writeSyncer, l)
+		core = zapcore.NewTee(
+			zapcore.NewCore(encoder, writeSyncer, l),
+			zapcore.NewCore(consoleEncoder, zapcore.Lock(os.Stdout), l), // 加这行
+		)
 	}
 
 	lg = zap.New(core, zap.AddCaller())

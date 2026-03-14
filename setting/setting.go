@@ -229,6 +229,8 @@ func Init(filePath string) error {
 	// viper.BindEnv("redis.port", "REDIS_PORT")
 	// viper.BindEnv("redis.password", "REDIS_PASSWORD")
 	envBindings := map[string]string{
+		"mode": "MODE", // 加这行
+
 		"mysql.host":     "MYSQL_HOST",
 		"mysql.port":     "MYSQL_PORT",
 		"mysql.user":     "MYSQL_USER",
