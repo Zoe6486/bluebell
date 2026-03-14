@@ -2,6 +2,7 @@ package setting
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/fsnotify/fsnotify"
 	"github.com/spf13/viper"
@@ -87,7 +88,8 @@ func Init(filePath string) error {
 		fmt.Printf("Warning: No config file at %s: %v. Using defaults + env vars only.\n", filePath, err)
 	}
 
-	viper.AutomaticEnv() // 支持 MYSQL_HOST 或 BLUEBELL_MYSQL_HOST 等
+	viper.AutomaticEnv()                                   // 支持 MYSQL_HOST 或 BLUEBELL_MYSQL_HOST 等
+	viper.SetEnvKeyReplacer(strings.NewReplacer(".", "_")) // 上面那行不会自动映射嵌套字段，MYSQL_HOST，MYSQL_PORT不会映射到mysql.host，mysql.port
 
 	// 如果想统一前缀（AWS 上常用），可选打开
 	// viper.SetEnvPrefix("APP")  // 环境变量变成 APP_MYSQL_HOST
@@ -98,9 +100,20 @@ func Init(filePath string) error {
 
 	// watch 配置变更（热更新可选，生产慎用）
 	viper.WatchConfig()
+	// viper.OnConfigChange(func(e fsnotify.Event) {
+	// 	fmt.Println("Config changed:", e.Name)
+
+	// 	if err := viper.Unmarshal(Conf); err != nil {
+	// 		fmt.Printf("config reload failed: %v\n", err)
+	// 	}
+	// })
+	// 更企业级
 	viper.OnConfigChange(func(e fsnotify.Event) {
 		fmt.Println("Config changed:", e.Name)
-		viper.Unmarshal(Conf) // 忽略 err 或 log
+
+		if err := viper.Unmarshal(Conf); err != nil {
+			panic(fmt.Errorf("config reload failed: %w", err))
+		}
 	})
 
 	return nil
