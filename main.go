@@ -64,6 +64,12 @@ func main() {
 	if setting.Conf.RedisConfig.Password == "" && setting.Conf.RedisConfig.Host != "localhost" { // 根据需要
 		zap.L().Fatal("Missing Redis password for production-like env")
 	}
+	if setting.Conf.RedisConfig.Host == "" || setting.Conf.RedisConfig.Host == "localhost" {
+		zap.L().Warn("Redis host is empty or localhost, may not connect in production")
+	}
+	if setting.Conf.Port == 0 {
+		zap.L().Fatal("Port not set, check config or env")
+	}
 
 	zap.L().Info("Config loaded (env-first)",
 		zap.String("source", "defaults + env"),
@@ -115,7 +121,12 @@ func main() {
 	if port == "" {
 		port = "8084" // 本地 fallback
 	}
-
+	// 新增诊断日志：方便排查 Railway 是否正确注入了 PORT
+	zap.L().Info("准备监听端口",
+		zap.String("resolved_port", port),
+		zap.String("env_PORT_value", os.Getenv("PORT")),
+		zap.Bool("using_fallback", port == "8084"),
+	)
 	srv := &http.Server{
 		Addr:    ":" + port, // 改成 ":" + port
 		Handler: r,
