@@ -123,14 +123,18 @@ package setting
 
 import (
 	"fmt"
-	"strconv"
 	"strings"
 
 	"github.com/fsnotify/fsnotify"
 	"github.com/spf13/viper"
 )
 
-var Conf = new(AppConfig)
+// var Conf = new(AppConfig)
+var Conf = &AppConfig{
+	LogConfig:   &LogConfig{},
+	MySQLConfig: &MySQLConfig{},
+	RedisConfig: &RedisConfig{},
+}
 
 type AppConfig struct {
 	Name      string `mapstructure:"name"`
@@ -224,20 +228,21 @@ func Init(filePath string) error {
 	viper.BindEnv("redis.port", "REDIS_PORT")
 	viper.BindEnv("redis.password", "REDIS_PASSWORD")
 
-	// 先解析 int 类型端口，避免 strconv.ParseInt 错误
-	mysqlPortStr := viper.GetString("mysql.port")
-	mysqlPort, err := strconv.Atoi(strings.TrimSpace(mysqlPortStr))
-	if err != nil {
-		return fmt.Errorf("invalid MYSQL_PORT: %v", err)
-	}
-	Conf.MySQLConfig.Port = mysqlPort
+	// // 先解析 int 类型端口，避免 strconv.ParseInt 错误
+	// mysqlPortStr := viper.GetString("mysql.port")
+	// mysqlPort, err := strconv.Atoi(strings.TrimSpace(mysqlPortStr))
+	// if err != nil {
+	// 	return fmt.Errorf("invalid MYSQL_PORT: %v", err)
+	// }
+	// Conf.MySQLConfig.Port = mysqlPort
 
-	redisPortStr := viper.GetString("redis.port")
-	redisPort, err := strconv.Atoi(strings.TrimSpace(redisPortStr))
-	if err != nil {
-		return fmt.Errorf("invalid REDIS_PORT: %v", err)
-	}
-	Conf.RedisConfig.Port = redisPort
+	// redisPortStr := viper.GetString("redis.port")
+	// redisPort, err := strconv.Atoi(strings.TrimSpace(redisPortStr))
+	// if err != nil {
+	// 	return fmt.Errorf("invalid REDIS_PORT: %v", err)
+	// }
+	// Conf.RedisConfig.Port = redisPort
+	// viper.Unmarshal()会 自动帮你转 int,所以上述不需要
 
 	// Unmarshal 结构体
 	if err := viper.Unmarshal(Conf); err != nil {
