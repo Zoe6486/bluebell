@@ -19,11 +19,16 @@ func Setup(db *sqlx.DB) *gin.Engine {
 		c.JSON(200, gin.H{"status": "healthy"})
 	})
 	r.Use(logger.GinLogger(), logger.GinRecovery(true))
-	//加载前端
-	r.LoadHTMLFiles("./templates/index.html")
-	r.Static("/static", "./static")
+	// //加载前端
+	// r.LoadHTMLFiles("./templates/index.html")
+	// r.Static("/static", "./static")
+	// r.GET("/", func(c *gin.Context) {
+	// 	c.HTML(http.StatusOK, "index.html", nil)
+	// })
 	r.GET("/", func(c *gin.Context) {
-		c.HTML(http.StatusOK, "index.html", nil)
+		c.JSON(http.StatusOK, gin.H{
+			"message": "bluebell api server",
+		})
 	})
 
 	r.GET("/ping", func(c *gin.Context) {
