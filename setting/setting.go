@@ -69,16 +69,16 @@ func Init(filePath string) (err error) {
 
 	viper.SetConfigFile(filePath)
 
-	// 环境变量覆盖
-	viper.AutomaticEnv()           // ← 加这行，自动读取环境变量
-	viper.SetEnvPrefix("BLUEBELL") // ← 加这行，环境变量前缀
-
-	err = viper.ReadInConfig() // 读取配置信息
-	if err != nil {
-		// 读取配置信息失败
-		fmt.Printf("viper.ReadInConfig failed, err:%v\n", err)
-		return
+	// 尝试读文件，但失败不致命
+	readErr := viper.ReadInConfig()
+	if readErr != nil {
+		// 这里用 warn，不要 panic 或 fatal
+		// 你可以加 zap logger 输出
+		fmt.Printf("Warning: config file not found or invalid (%s), relying on env vars and defaults: %v\n", filePath, readErr)
 	}
+
+	viper.AutomaticEnv() // 启用 env 覆盖
+	// viper.SetEnvPrefix("BLUEBELL")  // 建议注释掉，除非你想强制前缀
 
 	// 把读取到的配置信息反序列化到 Conf 变量中
 	if err := viper.Unmarshal(Conf); err != nil {

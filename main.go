@@ -36,52 +36,56 @@ func main() {
 	// }
 
 	// configPath := "./conf/dev.yaml" // 默认 dev
-	configPath := "./conf/config.yaml" // 部署就用config.yaml
+	// configPath := "./conf/config.yaml" // 部署就用config.yaml
+	// if len(os.Args) >= 2 {
+	// 	configPath = os.Args[1]
+	// }
+
+	var configPath string
 	if len(os.Args) >= 2 {
 		configPath = os.Args[1]
+	} else {
+		configPath = "./conf/config.yaml" // 默认值，文件不存在时会 warn 并 fallback 到 env
 	}
+
+	// 先尝试加载配置（现在 Init 内部已处理文件不存在的情况）
 	if err := setting.Init(configPath); err != nil {
-		// fmt.Printf("load config failed, err:%v\n", err)
-		// return
-		panic(fmt.Sprintf("load config failed: %v", err))
+		// 只有真正致命的 Unmarshal 错误才会到这里
+		// 建议在开发阶段打印详细错误，生产可改为 zap.Fatal
+		fmt.Printf("Fatal: setting.Init failed: %v\n", err)
+		os.Exit(1)
 	}
 
+	// 配置加载成功后，再初始化 logger（依赖 Conf.LogConfig）
 	if err := logger.Init(setting.Conf.LogConfig, setting.Conf.Mode); err != nil {
-		// fmt.Printf("init logger failed, err:%v\n", err)
-		// return
-		panic(err)
+		// logger 初始化失败是致命的
+		fmt.Printf("Fatal: logger init failed: %v\n", err)
+		os.Exit(1)
+	}
+	// 从这里开始，可以安全使用 zap.L()
+
+	// 配置加载的总结日志（方便排查）
+	zap.L().Info("Configuration loaded",
+		zap.String("config_path_attempted", configPath),
+		zap.Bool("using_env_fallback", true), // 可以加更多诊断信息
+		zap.String("mode", setting.Conf.Mode),
+		zap.Int("port", setting.Conf.Port),
+	)
+	// 初始化 snowflake（你已经硬编码了时间和 machine id，也可从 Conf 读）
+	if err := snowflake.Init("2026-01-01", 1); err != nil {
+		zap.L().Fatal("snowflake init failed", zap.Error(err))
 	}
 
-	// 初始化 snowflake
-	// if err := snowflake.Init(setting.Conf.StartTime, setting.Conf.MachineID); err != nil {
-	// 	fmt.Printf("init snowflake failed, err:%v\n", err)
-	// 	return
-	// }
-	if err := snowflake.Init("2026-01-01", 1); err != nil {
-		// fmt.Printf("init snowflake failed, err:%v\n", err)
-		// return
-		panic(err)
-	}
-	// 初始化自定义的validator
+	// 初始化自定义 validator
 	if err := controller.InitValidator(); err != nil {
-		// fmt.Printf("init validaor failed, err:%v\n", err)
-		// return
-		panic(err)
+		zap.L().Fatal("validator init failed", zap.Error(err))
 	}
 
 	// 初始化 MySQL
-	// if err := mysql.Init(setting.Conf.MySQLConfig); err != nil {
-	// 	// fmt.Printf("init mysql failed, err:%v\n", err)
-	// 	// return
-	// 	panic(err)
-	// }
-	// defer mysql.Close() // 程序退出关闭数据库连接
 	db, err := mysql.Init(setting.Conf.MySQLConfig)
 	if err != nil {
-		panic(err)
+		zap.L().Fatal("mysql init failed", zap.Error(err))
 	}
-	// defer db.Close()
-	// 延迟关闭，并处理错误
 	defer func() {
 		if err := db.Close(); err != nil {
 			zap.L().Error("mysql db close failed", zap.Error(err))
@@ -90,31 +94,23 @@ func main() {
 
 	// 初始化 Redis
 	if err := redis.Init(setting.Conf.RedisConfig); err != nil {
-		// fmt.Printf("init redis failed, err:%v\n", err)
-		// return
-		panic(err)
+		zap.L().Fatal("redis init failed", zap.Error(err))
 	}
 	defer redis.Close()
 
-	// 4. 注册路由
+	// 注册路由
 	r := router.Setup(db)
 
-	//
-	// err := r.Run(fmt.Sprintf(":%d", setting.Conf.Port))
-	// if err != nil {
-	// 	fmt.Printf("run server failed, err:%v\n", err)
-	// 	return
-	// }
-
-	// 5. 启动服务与优雅停机 (Standard Kiwi Enterprise Pattern)
+	// 启动 HTTP 服务 + 优雅关闭
 	srv := &http.Server{
 		Addr:    fmt.Sprintf(":%d", setting.Conf.Port),
 		Handler: r,
 	}
 
 	go func() {
+		zap.L().Info("Starting server", zap.String("addr", srv.Addr))
 		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-			zap.L().Fatal("listen: ", zap.Error(err))
+			zap.L().Fatal("listen failed", zap.Error(err))
 		}
 	}()
 
@@ -122,13 +118,14 @@ func main() {
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
 	<-quit
+
 	zap.L().Info("Shutdown Server ...")
 
-	// 5秒内尝试处理完存量请求
+	// 优雅关闭（5秒超时）
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 	if err := srv.Shutdown(ctx); err != nil {
-		zap.L().Fatal("Server Shutdown:", zap.Error(err))
+		zap.L().Fatal("Server Shutdown failed", zap.Error(err))
 	}
 
 	zap.L().Info("Server exiting")

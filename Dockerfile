@@ -66,4 +66,5 @@ COPY --from=builder /app/bluebell_app .
 COPY conf/ conf/
 
 EXPOSE 8084
-CMD ["./bluebell_app", "./conf/config.yaml"]
+# CMD ["./bluebell_app", "./conf/config.yaml"]
+CMD ["./bluebell_app"]
