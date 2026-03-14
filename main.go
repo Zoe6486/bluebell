@@ -62,16 +62,16 @@ func main() {
 
 	// 加关键配置校验（防止 nil/空密码导致崩溃）
 	if setting.Conf.MySQLConfig.Password == "" {
-		zap.L().Fatal("Missing required env: MYSQL_PASSWORD (or equivalent)")
+		zap.L().Warn("Missing required env: MYSQL_PASSWORD (or equivalent)")
 	}
 	if setting.Conf.RedisConfig.Password == "" && setting.Conf.RedisConfig.Host != "localhost" { // 根据需要
-		zap.L().Fatal("Missing Redis password for production-like env")
+		zap.L().Warn("Missing Redis password for production-like env")
 	}
 	if setting.Conf.RedisConfig.Host == "" || setting.Conf.RedisConfig.Host == "localhost" {
 		zap.L().Warn("Redis host is empty or localhost, may not connect in production")
 	}
 	if setting.Conf.Port == 0 {
-		zap.L().Fatal("Port not set, check config or env")
+		zap.L().Warn("Port not set, check config or env")
 	}
 
 	zap.L().Info("Config loaded (env-first)",
