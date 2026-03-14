@@ -55,7 +55,10 @@ func main() {
 		fmt.Printf("Fatal: logger init failed: %v\n", err)
 		os.Exit(1)
 	}
-	defer zap.L().Sync()
+	// defer zap.L().Sync()
+	defer func() {
+		_ = zap.L().Sync()
+	}()
 
 	// 加关键配置校验（防止 nil/空密码导致崩溃）
 	if setting.Conf.MySQLConfig.Password == "" {
@@ -74,7 +77,8 @@ func main() {
 	zap.L().Info("Config loaded (env-first)",
 		zap.String("source", "defaults + env"),
 		zap.String("mode", setting.Conf.Mode),
-		zap.String("log_level", setting.Conf.LogConfig.Level),
+		// zap.String("log_level", setting.Conf.LogConfig.Level),
+		zap.String("log_level", setting.Conf.Level),
 	)
 
 	//
