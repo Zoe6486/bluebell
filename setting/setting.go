@@ -188,7 +188,8 @@ func Init(filePath string) error {
 	viper.SetDefault("machine_id", 1)
 
 	viper.SetDefault("log.level", "info")
-	viper.SetDefault("log.filename", "/var/log/bluebell.log")
+	//viper.SetDefault("log.filename", "/var/log/bluebell.log")
+	viper.SetDefault("log.filename", "./bluebell.log")
 	viper.SetDefault("log.max_size", 200)
 	viper.SetDefault("log.max_age", 30)
 	viper.SetDefault("log.max_backups", 7)
