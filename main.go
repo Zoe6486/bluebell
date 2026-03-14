@@ -107,6 +107,7 @@ func main() {
 	// 	Addr:    fmt.Sprintf(":%d", setting.Conf.Port),
 	// 	Handler: r,
 	// }
+
 	// 强制使用 Railway 的动态端口（最关键）
 	// Railway 不使用你 Dockerfile 里 EXPOSE 的 8084，它会注入环境变量 PORT（随机，如 12345），你的应用必须监听 ${PORT}。
 	// 在 srv 定义前加

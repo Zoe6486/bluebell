@@ -15,6 +15,9 @@ import (
 // func Setup(userCtrl *controller.UserController, commCtrl *controller.CommunityController) *gin.Engine {
 func Setup(db *sqlx.DB) *gin.Engine {
 	r := gin.New()
+	r.GET("/health", func(c *gin.Context) {
+		c.JSON(200, gin.H{"status": "healthy"})
+	})
 	r.Use(logger.GinLogger(), logger.GinRecovery(true))
 	//加载前端
 	r.LoadHTMLFiles("./templates/index.html")
