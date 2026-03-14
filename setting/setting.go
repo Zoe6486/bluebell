@@ -88,8 +88,8 @@ func Init(filePath string) error {
 		fmt.Printf("Warning: No config file at %s: %v. Using defaults + env vars only.\n", filePath, err)
 	}
 
+	viper.SetEnvKeyReplacer(strings.NewReplacer(".", "_")) // 下面那行不会自动映射嵌套字段，MYSQL_HOST，MYSQL_PORT不会映射到mysql.host，mysql.port
 	viper.AutomaticEnv()                                   // 支持 MYSQL_HOST 或 BLUEBELL_MYSQL_HOST 等
-	viper.SetEnvKeyReplacer(strings.NewReplacer(".", "_")) // 上面那行不会自动映射嵌套字段，MYSQL_HOST，MYSQL_PORT不会映射到mysql.host，mysql.port
 
 	// 如果想统一前缀（AWS 上常用），可选打开
 	// viper.SetEnvPrefix("APP")  // 环境变量变成 APP_MYSQL_HOST
