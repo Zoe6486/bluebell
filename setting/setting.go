@@ -218,15 +218,32 @@ func Init(filePath string) error {
 	viper.AutomaticEnv()
 
 	// 显式绑定 Railway 自动生成的环境变量
-	viper.BindEnv("mysql.host", "MYSQL_HOST")
-	viper.BindEnv("mysql.port", "MYSQL_PORT")
-	viper.BindEnv("mysql.user", "MYSQL_USER")
-	viper.BindEnv("mysql.password", "MYSQL_PASSWORD")
-	viper.BindEnv("mysql.dbname", "MYSQL_DBNAME")
+	// viper.BindEnv("mysql.host", "MYSQL_HOST")
+	// viper.BindEnv("mysql.port", "MYSQL_PORT")
+	// viper.BindEnv("mysql.user", "MYSQL_USER")
+	// viper.BindEnv("mysql.password", "MYSQL_PASSWORD")
+	// viper.BindEnv("mysql.dbname", "MYSQL_DBNAME")
 
-	viper.BindEnv("redis.host", "REDIS_HOST")
-	viper.BindEnv("redis.port", "REDIS_PORT")
-	viper.BindEnv("redis.password", "REDIS_PASSWORD")
+	// viper.BindEnv("redis.host", "REDIS_HOST")
+	// viper.BindEnv("redis.port", "REDIS_PORT")
+	// viper.BindEnv("redis.password", "REDIS_PASSWORD")
+	envBindings := map[string]string{
+		"mysql.host":     "MYSQL_HOST",
+		"mysql.port":     "MYSQL_PORT",
+		"mysql.user":     "MYSQL_USER",
+		"mysql.password": "MYSQL_PASSWORD",
+		"mysql.dbname":   "MYSQL_DBNAME",
+
+		"redis.host":     "REDIS_HOST",
+		"redis.port":     "REDIS_PORT",
+		"redis.password": "REDIS_PASSWORD",
+	}
+
+	for key, env := range envBindings {
+		if err := viper.BindEnv(key, env); err != nil {
+			return fmt.Errorf("bind env %s failed: %w", env, err)
+		}
+	}
 
 	// // 先解析 int 类型端口，避免 strconv.ParseInt 错误
 	// mysqlPortStr := viper.GetString("mysql.port")
