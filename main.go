@@ -57,6 +57,14 @@ func main() {
 	}
 	defer zap.L().Sync()
 
+	// 加关键配置校验（防止 nil/空密码导致崩溃）
+	if setting.Conf.MySQLConfig.Password == "" {
+		zap.L().Fatal("Missing required env: MYSQL_PASSWORD (or equivalent)")
+	}
+	if setting.Conf.RedisConfig.Password == "" && setting.Conf.RedisConfig.Host != "localhost" { // 根据需要
+		zap.L().Fatal("Missing Redis password for production-like env")
+	}
+
 	zap.L().Info("Config loaded (env-first)",
 		zap.String("source", "defaults + env"),
 		zap.String("mode", setting.Conf.Mode),
@@ -94,9 +102,21 @@ func main() {
 	// 注册路由
 	r := router.Setup(db)
 
-	// 启动 HTTP 服务 + 优雅关闭
+	// // 启动 HTTP 服务 + 优雅关闭
+	// srv := &http.Server{
+	// 	Addr:    fmt.Sprintf(":%d", setting.Conf.Port),
+	// 	Handler: r,
+	// }
+	// 强制使用 Railway 的动态端口（最关键）
+	// Railway 不使用你 Dockerfile 里 EXPOSE 的 8084，它会注入环境变量 PORT（随机，如 12345），你的应用必须监听 ${PORT}。
+	// 在 srv 定义前加
+	port := os.Getenv("PORT")
+	if port == "" {
+		port = "8084" // 本地 fallback
+	}
+
 	srv := &http.Server{
-		Addr:    fmt.Sprintf(":%d", setting.Conf.Port),
+		Addr:    ":" + port, // 改成 ":" + port
 		Handler: r,
 	}
 
