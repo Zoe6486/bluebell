@@ -49,48 +49,59 @@ type LogConfig struct {
 	MaxBackups int    `mapstructure:"max_backups"`
 }
 
-func Init(filePath string) (err error) {
-
-	// 方式1：直接指定配置文件路径（相对路径或者绝对路径）
-	// 相对路径：相对执行的可执行文件的相对路径
-	//viper.SetConfigFile("./conf/config.yaml")
-	// 绝对路径：系统中实际的文件路径
-	//viper.SetConfigFile("/Users/liwenzhou/Desktop/bluebell/conf/config.yaml")
-
-	// 方式2：指定配置文件名和配置文件的位置，viper自行查找可用的配置文件
-	// 配置文件名不需要带后缀
-	// 配置文件位置可配置多个
-	//viper.SetConfigName("config") // 指定配置文件名（不带后缀）
-	//viper.AddConfigPath(".") // 指定查找配置文件的路径（这里使用相对路径）
-	//viper.AddConfigPath("./conf")      // 指定查找配置文件的路径（这里使用相对路径）
-
-	// 基本上是配合远程配置中心使用的，告诉viper当前的数据使用什么格式去解析
-	//viper.SetConfigType("json")
-
+func Init(filePath string) error {
 	viper.SetConfigFile(filePath)
 
-	// 尝试读文件，但失败不致命
-	readErr := viper.ReadInConfig()
-	if readErr != nil {
-		// 这里用 warn，不要 panic 或 fatal
-		// 你可以加 zap logger 输出
-		fmt.Printf("Warning: config file not found or invalid (%s), relying on env vars and defaults: %v\n", filePath, readErr)
+	// 所有字段设置默认值（生产安全 + fallback）
+	viper.SetDefault("name", "bluebell")
+	viper.SetDefault("mode", "release")
+	viper.SetDefault("port", 8084)
+	viper.SetDefault("version", "v0.0.1")
+	viper.SetDefault("start_time", "2020-07-01")
+	viper.SetDefault("machine_id", 1)
+
+	viper.SetDefault("auth.jwt_expire", 8760)
+
+	viper.SetDefault("log.level", "info") // 生产默认 info，避免 debug 泄露
+	viper.SetDefault("log.filename", "/var/log/bluebell.log")
+	viper.SetDefault("log.max_size", 200)
+	viper.SetDefault("log.max_age", 30)
+	viper.SetDefault("log.max_backups", 7)
+
+	viper.SetDefault("mysql.host", "localhost")
+	viper.SetDefault("mysql.port", 3306)
+	viper.SetDefault("mysql.user", "")
+	viper.SetDefault("mysql.password", "") // 必须 env 提供，否则启动失败
+	viper.SetDefault("mysql.dbname", "bluebell")
+	viper.SetDefault("mysql.max_open_conns", 200)
+	viper.SetDefault("mysql.max_idle_conns", 50)
+
+	viper.SetDefault("redis.host", "localhost")
+	viper.SetDefault("redis.port", 6379)
+	viper.SetDefault("redis.password", "")
+	viper.SetDefault("redis.db", 0)
+	viper.SetDefault("redis.pool_size", 100)
+
+	// 读文件（可选）
+	if err := viper.ReadInConfig(); err != nil {
+		fmt.Printf("Warning: No config file at %s: %v. Using defaults + env vars only.\n", filePath, err)
 	}
 
-	viper.AutomaticEnv() // 启用 env 覆盖
-	// viper.SetEnvPrefix("BLUEBELL")  // 建议注释掉，除非你想强制前缀
+	viper.AutomaticEnv() // 支持 MYSQL_HOST 或 BLUEBELL_MYSQL_HOST 等
 
-	// 把读取到的配置信息反序列化到 Conf 变量中
+	// 如果想统一前缀（AWS 上常用），可选打开
+	// viper.SetEnvPrefix("APP")  // 环境变量变成 APP_MYSQL_HOST
+
 	if err := viper.Unmarshal(Conf); err != nil {
-		fmt.Printf("viper.Unmarshal failed, err:%v\n", err)
+		return fmt.Errorf("config unmarshal failed: %w", err)
 	}
 
+	// watch 配置变更（热更新可选，生产慎用）
 	viper.WatchConfig()
-	viper.OnConfigChange(func(in fsnotify.Event) {
-		fmt.Println("配置文件修改了...")
-		if err := viper.Unmarshal(Conf); err != nil {
-			fmt.Printf("viper.Unmarshal failed, err:%v\n", err)
-		}
+	viper.OnConfigChange(func(e fsnotify.Event) {
+		fmt.Println("Config changed:", e.Name)
+		viper.Unmarshal(Conf) // 忽略 err 或 log
 	})
-	return
+
+	return nil
 }

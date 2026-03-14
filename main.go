@@ -41,36 +41,29 @@ func main() {
 	// 	configPath = os.Args[1]
 	// }
 
-	var configPath string
+	configPath := "./conf/config.yaml" // 本地 fallback，生产无文件
 	if len(os.Args) >= 2 {
 		configPath = os.Args[1]
-	} else {
-		configPath = "./conf/config.yaml" // 默认值，文件不存在时会 warn 并 fallback 到 env
 	}
 
-	// 先尝试加载配置（现在 Init 内部已处理文件不存在的情况）
 	if err := setting.Init(configPath); err != nil {
-		// 只有真正致命的 Unmarshal 错误才会到这里
-		// 建议在开发阶段打印详细错误，生产可改为 zap.Fatal
-		fmt.Printf("Fatal: setting.Init failed: %v\n", err)
+		fmt.Printf("Fatal: config init failed: %v\n", err)
 		os.Exit(1)
 	}
 
-	// 配置加载成功后，再初始化 logger（依赖 Conf.LogConfig）
 	if err := logger.Init(setting.Conf.LogConfig, setting.Conf.Mode); err != nil {
-		// logger 初始化失败是致命的
 		fmt.Printf("Fatal: logger init failed: %v\n", err)
 		os.Exit(1)
 	}
-	// 从这里开始，可以安全使用 zap.L()
+	defer zap.L().Sync()
 
-	// 配置加载的总结日志（方便排查）
-	zap.L().Info("Configuration loaded",
-		zap.String("config_path_attempted", configPath),
-		zap.Bool("using_env_fallback", true), // 可以加更多诊断信息
+	zap.L().Info("Config loaded (env-first)",
+		zap.String("source", "defaults + env"),
 		zap.String("mode", setting.Conf.Mode),
-		zap.Int("port", setting.Conf.Port),
+		zap.String("log_level", setting.Conf.LogConfig.Level),
 	)
+
+	//
 	// 初始化 snowflake（你已经硬编码了时间和 machine id，也可从 Conf 读）
 	if err := snowflake.Init("2026-01-01", 1); err != nil {
 		zap.L().Fatal("snowflake init failed", zap.Error(err))
