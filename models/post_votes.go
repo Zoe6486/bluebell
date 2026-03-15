@@ -4,12 +4,12 @@ import "time"
 
 // PostVote represents a user's vote on a post
 type PostVote struct {
-	ID         uint64    `db:"id"`
-	PostID     uint64    `db:"post_id"`
-	UserID     uint64    `db:"user_id"`
-	VoteType   int8      `db:"vote_type"`
-	CreateTime time.Time `db:"create_time"`
-	UpdateTime time.Time `db:"update_time"`
+	ID        uint64    `db:"id"`
+	PostID    uint64    `db:"post_id"`
+	UserID    uint64    `db:"user_id"`
+	VoteType  int8      `db:"vote_type"`
+	CreatedAt time.Time `db:"create_time"`
+	UpdatedAt time.Time `db:"update_time"`
 }
 
 // VoteType constants

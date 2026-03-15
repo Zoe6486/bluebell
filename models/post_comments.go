@@ -4,13 +4,13 @@ import "time"
 
 // PostComment represents a top-level comment on a post
 type PostComment struct {
-	ID         uint64    `db:"id"`
-	PostID     uint64    `db:"post_id"`
-	UserID     uint64    `db:"user_id"`
-	Content    string    `db:"content"`
-	LikeCount  uint32    `db:"like_count"`
-	Status     int8      `db:"status"`
-	CreateTime time.Time `db:"create_time"`
+	ID        uint64    `db:"id"`
+	PostID    uint64    `db:"post_id"`
+	UserID    uint64    `db:"user_id"`
+	Content   string    `db:"content"`
+	LikeCount uint32    `db:"like_count"`
+	Status    int8      `db:"status"`
+	CreatedAt time.Time `db:"create_time"`
 }
 
 // CommentStatus constants

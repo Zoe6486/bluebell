@@ -26,7 +26,7 @@ func (l *CommunityLogic) GetCommunityList() ([]*models.Community, error) {
 	return l.store.GetCommunityList()
 }
 
-var ErrCommunityNotFound = errors.New("community not found")
+// var ErrCommunityNotFound = errors.New("community not found")
 
 func (l *CommunityLogic) GetCommunityDetail(id int64) (*models.CommunityDetail, error) {
 	// return l.store.GetCommunityDetailByID(id)

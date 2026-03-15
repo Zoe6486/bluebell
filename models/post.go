@@ -34,8 +34,8 @@ type Post struct {
 	AuthorID    int64     `db:"author_id"`
 	CommunityID int64     `db:"community_id"`
 	Status      int8      `db:"status"`
-	CreateTime  time.Time `db:"create_time"`
-	UpdateTime  time.Time `db:"update_time"`
+	CreatedAt   time.Time `db:"create_time"`
+	UpdatedAt   time.Time `db:"update_time"`
 	LikeCount   int64     `db:"like_count"` // 聚合计算字段，非表列
 }
 
@@ -48,16 +48,18 @@ const (
 
 // PostDetail is used for API responses, embedding enriched data
 type PostDetail struct {
-	*Post                // 嵌入 Post 全部字段
-	AuthorName    string `db:"author_name"`    // users 表 JOIN 出来的???username?
-	CommunityName string `db:"community_name"` // communities 表 JOIN
-	// LikeCount     int64  `db:"like_count"` //Post写了就不写了
+	*Post // 嵌入 Post 全部字段
+	// AuthorName    string `db:"author_name"`    // users 表 JOIN 出来的???username?
+	// CommunityName string `db:"community_name"` // communities 表 JOIN
+	AuthorName    *string `db:"author_name"` // 为啥要改成加*的string
+	CommunityName *string `db:"community_name"`
+	// LikeCount     int64  `db:"like_count"` // *Post写了就不写了
 	DislikeCount int64 `db:"dislike_count"`
 }
 
 // CreatePostParams holds the data needed to create a new post
 type CreatePostParams struct {
-	PostID      int64  `json:"post_id"`
+	//PostID      int64  `json:"post_id"` // 到底要吗这一行
 	Title       string `json:"title" binding:"required,max=128"`
 	Content     string `json:"content" binding:"required"`
 	AuthorID    int64  `json:"author_id"`

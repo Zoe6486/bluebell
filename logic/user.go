@@ -70,7 +70,6 @@ import (
 	"bluebell/models"
 	"bluebell/pkg/jwt"
 	"bluebell/pkg/snowflake"
-	"errors"
 
 	"golang.org/x/crypto/bcrypt"
 )
@@ -137,10 +136,10 @@ func (l *UserLogic) Login(p *models.ParamLogin) (*models.User, error) {
 	return user, nil
 }
 
-// Sentinel errors for the logic layer
-var (
-	ErrUsernameTaken      = errors.New("username already taken")
-	ErrEmailTaken         = errors.New("email already registered")
-	ErrInvalidCredentials = errors.New("invalid email or password")
-	ErrAccountSuspended   = errors.New("account suspended")
-)
+// // Sentinel errors for the logic layer,写到了errors里
+// var (
+// 	ErrUsernameTaken      = errors.New("username already taken")
+// 	ErrEmailTaken         = errors.New("email already registered")
+// 	ErrInvalidCredentials = errors.New("invalid email or password")
+// 	ErrAccountSuspended   = errors.New("account suspended")
+// )

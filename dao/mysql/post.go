@@ -8,27 +8,15 @@ import (
 
 	"github.com/jmoiron/sqlx"
 
+	"bluebell/logic"
 	"bluebell/models"
 )
-
-// PostStore defines the data access interface for posts.
-// Logic layer depends on this interface, not the concrete struct —
-// makes unit testing and future DB swaps straightforward.
-type PostStore interface {
-	Create(ctx context.Context, p *models.Post) error
-	GetByID(ctx context.Context, postID int64) (*models.Post, error)
-	GetDetail(ctx context.Context, postID int64) (*models.PostDetail, error)
-	List(ctx context.Context, params *models.PostListParams) ([]*models.Post, int64, error)
-	UpdateStatus(ctx context.Context, postID int64, status int8) error
-	Delete(ctx context.Context, postID int64) error
-}
 
 type postDao struct {
 	db *sqlx.DB
 }
 
-// NewPostDao constructs a PostStore backed by MySQL via sqlx.
-func NewPostDao(db *sqlx.DB) PostStore {
+func NewPostDao(db *sqlx.DB) logic.PostStore {
 	return &postDao{db: db}
 }
 
@@ -36,7 +24,6 @@ func (d *postDao) Create(ctx context.Context, p *models.Post) error {
 	const query = `
 		INSERT INTO post (post_id, title, content, author_id, community_id, status)
 		VALUES (:post_id, :title, :content, :author_id, :community_id, :status)`
-
 	_, err := d.db.NamedExecContext(ctx, query, p)
 	return err
 }
@@ -50,27 +37,26 @@ func (d *postDao) GetByID(ctx context.Context, postID int64) (*models.Post, erro
 	var p models.Post
 	if err := d.db.GetContext(ctx, &p, query, postID, models.PostStatusDeleted); err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			return nil, ErrNotFound
+			return nil, logic.ErrNotFound
 		}
 		return nil, err
 	}
 	return &p, nil
 }
 
-// GetDetail joins user and community tables for a richer response.
 func (d *postDao) GetDetail(ctx context.Context, postID int64) (*models.PostDetail, error) {
 	const query = `
 		SELECT
 			p.id, p.post_id, p.title, p.content, p.author_id, p.community_id,
 			p.status, p.create_time, p.update_time,
-			u.username  AS author_name,
-			c.community_name      AS community_name,
-			COALESCE(SUM(CASE WHEN pv.vote_type = 1  THEN 1 ELSE 0 END), 0) AS like_count,
-			COALESCE(SUM(CASE WHEN pv.vote_type = -1 THEN 1 ELSE 0 END), 0) AS dislike_count
+			u.username                                                          AS author_name,
+			c.community_name                                                    AS community_name,
+			COALESCE(SUM(CASE WHEN pv.vote_type =  1 THEN 1 ELSE 0 END), 0)   AS like_count,
+			COALESCE(SUM(CASE WHEN pv.vote_type = -1 THEN 1 ELSE 0 END), 0)   AS dislike_count
 		FROM post p
-		LEFT JOIN user        u  ON u.user_id    = p.author_id
-		LEFT JOIN community   c  ON c.community_id         = p.community_id
-		LEFT JOIN post_votes  pv ON pv.post_id   = p.post_id
+		LEFT JOIN user       u  ON u.user_id      = p.author_id
+		LEFT JOIN community  c  ON c.community_id = p.community_id
+		LEFT JOIN post_votes pv ON pv.post_id      = p.post_id
 		WHERE p.post_id = ? AND p.status != ?
 		GROUP BY p.id`
 
@@ -78,15 +64,13 @@ func (d *postDao) GetDetail(ctx context.Context, postID int64) (*models.PostDeta
 	detail.Post = &models.Post{}
 	if err := d.db.GetContext(ctx, &detail, query, postID, models.PostStatusDeleted); err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			return nil, ErrNotFound
+			return nil, logic.ErrNotFound
 		}
 		return nil, err
 	}
 	return &detail, nil
 }
 
-// List returns a paginated list of posts.
-// Supports filtering by community and ordering by create_time or vote score.
 func (d *postDao) List(ctx context.Context, params *models.PostListParams) ([]*models.Post, int64, error) {
 	if params.Page <= 0 {
 		params.Page = 1
@@ -96,7 +80,6 @@ func (d *postDao) List(ctx context.Context, params *models.PostListParams) ([]*m
 	}
 	offset := (params.Page - 1) * params.PageSize
 
-	// Build ORDER BY clause — whitelist to prevent SQL injection
 	orderBy := "p.create_time DESC"
 	if params.OrderBy == "score" {
 		orderBy = "like_count DESC, p.create_time DESC"
@@ -110,14 +93,12 @@ func (d *postDao) List(ctx context.Context, params *models.PostListParams) ([]*m
 		args = append(args, params.CommunityID)
 	}
 
-	// Count query
 	countSQL := fmt.Sprintf(`SELECT COUNT(*) FROM post p %s`, whereClause)
 	var total int64
 	if err := d.db.GetContext(ctx, &total, countSQL, args...); err != nil {
 		return nil, 0, err
 	}
 
-	// Data query
 	dataSQL := fmt.Sprintf(`
 		SELECT
 			p.id, p.post_id, p.title, p.content, p.author_id, p.community_id,
@@ -138,19 +119,15 @@ func (d *postDao) List(ctx context.Context, params *models.PostListParams) ([]*m
 	return posts, total, nil
 }
 
-func (d *postDao) UpdateStatus(ctx context.Context, postID int64, status int8) error {
+func (d *postDao) Delete(ctx context.Context, postID int64) error {
 	const query = `UPDATE post SET status = ? WHERE post_id = ?`
-	res, err := d.db.ExecContext(ctx, query, status, postID)
+	res, err := d.db.ExecContext(ctx, query, models.PostStatusDeleted, postID)
 	if err != nil {
 		return err
 	}
 	rows, _ := res.RowsAffected()
 	if rows == 0 {
-		return ErrNotFound
+		return logic.ErrNotFound
 	}
 	return nil
-}
-
-func (d *postDao) Delete(ctx context.Context, postID int64) error {
-	return d.UpdateStatus(ctx, postID, models.PostStatusDeleted)
 }

@@ -50,7 +50,7 @@ func Setup(db *sqlx.DB) *gin.Engine {
 	// ── Wire up Logic ─────────────────────────────────────────────────────
 	userLogic := logic.NewUserLogic(userDao)
 	communityLogic := logic.NewCommunityLogic(communityDao)
-	postLogic := logic.NewPostLogic(postDao, postVoteDao)
+	postLogic := logic.NewPostLogic(postDao)
 	voteLogic := logic.NewPostVoteLogic(postVoteDao, postDao)
 	commentLogic := logic.NewPostCommentLogic(postCommentDao, postDao)
 
