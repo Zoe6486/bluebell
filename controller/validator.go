@@ -85,3 +85,14 @@ func removeTopStruct(fields map[string]string) map[string]string {
 	}
 	return res
 }
+
+func formatValidationError(err error) string {
+	if errs, ok := err.(validator.ValidationErrors); ok {
+		fields := make(map[string]string)
+		for _, e := range errs {
+			fields[e.Namespace()] = e.Tag()
+		}
+		return fmt.Sprintf("%v", removeTopStruct(fields))
+	}
+	return err.Error()
+}

@@ -41,7 +41,8 @@ func main() {
 	// 	configPath = os.Args[1]
 	// }
 
-	configPath := "./conf/config.yaml" // 本地 fallback，生产无文件
+	//configPath := "./conf/config.yaml" // 本地 fallback，生产无文件
+	configPath := "./conf/dev.yaml"
 	if len(os.Args) >= 2 {
 		configPath = os.Args[1]
 	}

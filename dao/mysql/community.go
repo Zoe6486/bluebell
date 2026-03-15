@@ -3,6 +3,7 @@ package mysql
 import (
 	"bluebell/models"
 	"database/sql"
+	"errors"
 
 	"github.com/jmoiron/sqlx"
 )
@@ -35,14 +36,21 @@ func (dao *communityDao) GetCommunityList() ([]*models.Community, error) {
 
 func (dao *communityDao) GetCommunityDetailByID(id int64) (*models.CommunityDetail, error) {
 	var communityDetail models.CommunityDetail
-	sqlStr := `select community_id, community_name, introduction, create_time from community where community_id = ?`
-	err := dao.db.Get(&communityDetail, sqlStr, id)
-	if err != nil {
-		if err == sql.ErrNoRows {
-			// 	return nil, ErrorInvalidID
-			return nil, err //到底在哪里定义错误？？？
-		}
+	// sqlStr := `select community_id, community_name, introduction, create_time from community where community_id = ?`
+	// err := dao.db.Get(&communityDetail, sqlStr, id)
+	// if err != nil {
+	// 	if err == sql.ErrNoRows {
+	// 		// 	return nil, ErrorInvalidID
+	// 		return nil, err //到底在哪里定义错误？？？
+	// 	}
+	// 	return nil, err
+	// }
+	// return &communityDetail, nil // 返回局部变量指针，会不会空？不会。Go 的逃逸分析会把它放到 heap。
+	// create_time改成created_at，对应新的SQL
+	sqlStr := `SELECT community_id, community_name, introduction, created_at FROM community WHERE community_id = ? AND status != ?`
+	err := dao.db.Get(&communityDetail, sqlStr, id, models.CommunityStatusDeleted)
+	if errors.Is(err, sql.ErrNoRows) {
 		return nil, err
 	}
-	return &communityDetail, nil // 返回局部变量指针，会不会空？不会。Go 的逃逸分析会把它放到 heap。
+	return &communityDetail, err
 }
