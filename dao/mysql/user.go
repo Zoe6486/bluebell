@@ -75,6 +75,7 @@
 package mysql
 
 import (
+	"bluebell/logic"
 	"bluebell/models"
 	"database/sql"
 	"errors"
@@ -91,19 +92,22 @@ var (
 	ErrAccountSuspended = errors.New("account suspended")
 )
 
-type UserStore interface {
-	ExistsByUsername(username string) (bool, error)
-	ExistsByEmail(email string) (bool, error)
-	Insert(user *models.User) error
-	GetByEmail(email string) (*models.User, error)
-	GetByUserID(userID int64) (*models.User, error)
-}
+// type UserStore interface {
+// 	ExistsByUsername(username string) (bool, error)
+// 	ExistsByEmail(email string) (bool, error)
+// 	Insert(user *models.User) error
+// 	GetByEmail(email string) (*models.User, error)
+// 	GetByUserID(userID int64) (*models.User, error)
+// }
 
 type userDao struct {
 	db *sqlx.DB
 }
 
-func NewUserDao(db *sqlx.DB) UserStore {
+// ✅ 编译期检查
+var _ logic.UserStore = (*userDao)(nil)
+
+func NewUserDao(db *sqlx.DB) logic.UserStore {
 	return &userDao{db: db}
 }
 
