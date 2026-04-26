@@ -87,12 +87,15 @@ func GinLogger() gin.HandlerFunc {
 		start := time.Now()
 		path := c.Request.URL.Path
 		query := c.Request.URL.RawQuery
+		// --- 新增：尝试从 context 获取 requestID ---
+		requestID, _ := c.Get("requestID")
 		c.Next()
 
 		cost := time.Since(start)
 		lg.Info(path,
 			zap.Int("status", c.Writer.Status()),
 			zap.String("method", c.Request.Method),
+			zap.Any("request_id", requestID), // 把 ID 记录到日志里
 			zap.String("path", path),
 			zap.String("query", query),
 			zap.String("ip", c.ClientIP()),

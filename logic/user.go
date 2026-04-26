@@ -91,25 +91,22 @@ func NewUserLogic(store UserStore) *UserLogic {
 }
 
 func (l *UserLogic) SignUp(p *models.ParamSignUp) error {
-	if taken, err := l.store.ExistsByUsername(p.Username); err != nil {
-		return err
-	} else if taken {
-		return ErrUsernameTaken
-	}
-
-	if taken, err := l.store.ExistsByEmail(p.Email); err != nil {
-		return err
-	} else if taken {
-		return ErrEmailTaken
-	}
-
+	// if taken, err := l.store.ExistsByUsername(p.Username); err != nil {
+	// 	return err
+	// } else if taken {
+	// 	return ErrUsernameTaken
+	// }
+	// if taken, err := l.store.ExistsByEmail(p.Email); err != nil {
+	// 	return err
+	// } else if taken {
+	// 	return ErrEmailTaken
+	// }
 	user := &models.User{
 		UserID:   snowflake.GenID(),
 		Username: p.Username,
 		Email:    p.Email,
 		Password: p.Password,
 	}
-
 	return l.store.Insert(user)
 }
 

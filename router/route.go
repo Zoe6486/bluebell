@@ -18,6 +18,9 @@ func Setup(db *sqlx.DB) *gin.Engine {
 	r.GET("/health", func(c *gin.Context) {
 		c.JSON(200, gin.H{"status": "healthy"})
 	})
+	// 1. 第一位：生成 Request ID (给后面所有人用)
+	r.Use(middleware.RequestIDMiddleware())
+	// 2. 第二位：记录日志 ,异常捕获，分开写更好吗？
 	r.Use(logger.GinLogger(), logger.GinRecovery(true))
 	// //加载前端
 	// r.LoadHTMLFiles("./templates/index.html")

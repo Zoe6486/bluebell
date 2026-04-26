@@ -79,17 +79,16 @@ import (
 	"bluebell/models"
 	"database/sql"
 	"errors"
+	"strings"
 
+	"github.com/go-sql-driver/mysql"
 	"github.com/jmoiron/sqlx"
 	"golang.org/x/crypto/bcrypt"
 )
 
 var (
-	ErrUserNotFound     = errors.New("user not found")
-	ErrUsernameTaken    = errors.New("username already taken")
-	ErrEmailTaken       = errors.New("email already registered")
-	ErrInvalidPassword  = errors.New("invalid password")
-	ErrAccountSuspended = errors.New("account suspended")
+	ErrUserNotFound    = errors.New("user not found")
+	ErrInvalidPassword = errors.New("invalid password")
 )
 
 // type UserStore interface {
@@ -105,6 +104,7 @@ type userDao struct {
 }
 
 // ✅ 编译期检查
+// “强制要求 userDao 必须实现 UserStore 接口
 var _ logic.UserStore = (*userDao)(nil)
 
 func NewUserDao(db *sqlx.DB) logic.UserStore {
@@ -124,15 +124,45 @@ func (d *userDao) ExistsByEmail(email string) (bool, error) {
 }
 
 func (d *userDao) Insert(user *models.User) error {
+	// hash, err := bcrypt.GenerateFromPassword([]byte(user.Password), bcrypt.DefaultCost)
+	// if err != nil {
+	// 	return err
+	// }
+	// _, err = d.db.Exec(
+	// 	`INSERT INTO user (user_id, username, email, password) VALUES (?, ?, ?, ?)`,
+	// 	user.UserID, user.Username, user.Email, string(hash),
+	// )
+	// return err
 	hash, err := bcrypt.GenerateFromPassword([]byte(user.Password), bcrypt.DefaultCost)
 	if err != nil {
 		return err
 	}
+
+	// 2. insert
 	_, err = d.db.Exec(
-		`INSERT INTO user (user_id, username, email, password) VALUES (?, ?, ?, ?)`,
+		`INSERT INTO user(user_id, username, email, password) VALUES(?, ?, ?, ?)`,
 		user.UserID, user.Username, user.Email, string(hash),
 	)
-	return err
+	if err != nil {
+		var mysqlErr *mysql.MySQLError
+		if errors.As(err, &mysqlErr) && mysqlErr.Number == 1062 {
+			msg := mysqlErr.Message
+
+			switch {
+			case strings.Contains(msg, "uidx_username"):
+				return logic.ErrUsernameTaken
+
+			case strings.Contains(msg, "uidx_email"):
+				return logic.ErrEmailTaken
+
+			default:
+				return logic.ErrDuplicateEntry
+			}
+		}
+		return err
+	}
+
+	return nil
 }
 
 func (d *userDao) GetByEmail(email string) (*models.User, error) {

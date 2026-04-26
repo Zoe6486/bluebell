@@ -9,10 +9,13 @@ var (
 	ErrPostTooOld   = errors.New("post is too old to vote on")
 
 	// User errors
-	ErrUsernameTaken      = errors.New("username already taken")
-	ErrEmailTaken         = errors.New("email already registered")
+	ErrUsernameTaken  = errors.New("username already taken")
+	ErrEmailTaken     = errors.New("email already registered")
+	ErrDuplicateEntry = errors.New("duplicate entry")
+
 	ErrInvalidCredentials = errors.New("invalid email or password")
-	ErrAccountSuspended   = errors.New("account suspended")
+
+	ErrAccountSuspended = errors.New("account suspended")
 
 	// Community errors
 	ErrCommunityNotFound = errors.New("community not found")
